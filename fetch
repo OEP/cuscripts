@@ -1,0 +1,57 @@
+#!/bin/bash
+
+## Render fetcher. It assumes a lot about the directory structure of your
+## render so watch out. Where $(base) is some user-provided base and
+## <name> is the name of your rendering project, then the
+## directory structure for your renders should look like
+
+## $(base)/<name>/test -- for temporary renders
+## $(base)/<name>/daily/YYYY-MM-DD -- for daily renders
+## $(base)/<name>/named/<id> -- for manual renders with particular names
+
+export HOST='user.palmetto.clemson.edu'
+export REMOTE_BASE="/newscratch/`whoami`"
+export LOCAL_SCRATCH="/scratch/`whoami`"
+
+function printUsage() {
+  echo "Fetches renders from $HOST:$REMOTE_BASE."
+  echo
+  echo "USAGE: <name> <what> [<which>]"
+  echo
+  echo "Where: "
+  echo "  <name>: is the name of the render"
+  echo "  <what>: one of 'test', 'daily', or 'named'"
+  echo "  <which>: "
+  echo "    If <which> is 'daily' fetch a daily render for a format like date +%F (default: today)"
+  echo "    If <which> is 'named', fetch a named render"
+}
+
+if [ -z "$2" ]; then
+  printUsage
+  exit 1
+fi
+
+export REMOTE_BASE="$REMOTE_BASE/$1"
+export LOCAL_SCRATCH="$LOCAL_SCRATCH/$1"
+
+if [ "$2" = "test" ]; then
+  export REMOTE_PATH="$REMOTE_BASE/test"
+  export LOCAL_PATH="$LOCAL_SCRATCH/test"
+elif [ "$2" = "daily" -a -z "$3" ]; then
+  export TMP=`date +%F`
+  export REMOTE_PATH="$REMOTE_BASE/daily/$TMP"
+  export LOCAL_PATH="$LOCAL_SCRATCH/daily/$TMP"
+elif [ "$2" = "daily" ]; then
+  export REMOTE_PATH="$REMOTE_BASE/daily/$3"
+  export LOCAL_PATH="$LOCAL_SCRATCH/daily/$3"
+elif [ "$2" = "named" -a -n "$3" ]; then
+  export REMOTE_PATH="$REMOTE_BASE/named/$3"
+  export LOCAL_PATH="$LOCAL_SCRATCH/named/$3"
+else
+  printUsage
+  exit 2
+fi
+
+mkdir -p $LOCAL_PATH
+
+rsync -r --progress $HOST:$REMOTE_PATH/ $LOCAL_PATH
