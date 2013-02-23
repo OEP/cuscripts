@@ -54,4 +54,4 @@ fi
 
 mkdir -p $LOCAL_PATH
 
-rsync -r --progress $HOST:$REMOTE_PATH/ $LOCAL_PATH
+rsync -rz --progress $HOST:$REMOTE_PATH/ $LOCAL_PATH
